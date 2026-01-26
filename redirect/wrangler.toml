@@ -6,6 +6,6 @@ workers_dev = false
 # Redirect both domains to usemakoto.dev
 # Ensure both domains are active in your Cloudflare account
 routes = [
-  { pattern = "dlp.dev/*", zone_name = "dlp.dev" },
+  { pattern = "dpl.dev/*", zone_name = "dpl.dev" },
   { pattern = "dsla.dev/*", zone_name = "dsla.dev" }
 ]
