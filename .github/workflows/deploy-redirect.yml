@@ -1,0 +1,21 @@
+name: Deploy Redirect Worker
+
+on:
+  push:
+    paths:
+      - 'redirect/**' # Only deploys if you change the redirect code
+    branches:
+      - main
+  workflow_dispatch: # Allows you to run it manually if needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_REDIRECT_TOKEN }}
+          workingDirectory: 'redirect'

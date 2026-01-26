@@ -1,0 +1,11 @@
+name = "makoto-redirect"
+main = "index.js"
+compatibility_date = "2024-01-01"
+workers_dev = false
+
+# Redirect both domains to usemakoto.dev
+# Ensure both domains are active in your Cloudflare account
+routes = [
+  { pattern = "dlp.dev/*", zone_name = "dlp.dev" },
+  { pattern = "dsla.dev/*", zone_name = "dsla.dev" }
+]
