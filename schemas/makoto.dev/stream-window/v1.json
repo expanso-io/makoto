@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makoto.dev/schemas/stream-window/v1.json",
+  "title": "Makoto Stream Window Attestation Predicate v1",
+  "description": "Schema for the predicate of a Makoto stream window attestation, documenting bounded subsets of streaming data",
+  "type": "object",
+  "properties": {
+    "stream": {
+      "type": "object",
+      "description": "Information about the data stream",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the stream"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source URI for the stream (e.g., mqtt://, kafka://)"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Topic or channel name"
+        },
+        "partitions": {
+          "type": "array",
+          "description": "Specific partitions included in this window",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["id", "source"]
+    },
+    "window": {
+      "type": "object",
+      "description": "Window definition and boundaries",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["tumbling", "sliding", "session", "global"],
+          "description": "Type of window"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Window duration (ISO 8601 duration)"
+        },
+        "slide": {
+          "type": "string",
+          "description": "Slide interval for sliding windows (ISO 8601 duration)"
+        },
+        "alignment": {
+          "type": "string",
+          "enum": ["wall-clock", "event-time", "processing-time"],
+          "description": "Time alignment for the window"
+        },
+        "watermark": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Watermark timestamp for this window"
+        },
+        "allowedLateness": {
+          "type": "string",
+          "description": "Allowed late data tolerance (ISO 8601 duration)"
+        }
+      },
+      "required": ["type", "duration"]
+    },
+    "integrity": {
+      "type": "object",
+      "description": "Cryptographic integrity information for the window",
+      "properties": {
+        "merkleTree": {
+          "type": "object",
+          "description": "Merkle tree details for the window records",
+          "properties": {
+            "algorithm": {
+              "type": "string",
+              "enum": ["sha256", "sha384", "sha512", "blake2b", "blake3"],
+              "description": "Hash algorithm for the tree"
+            },
+            "leafHashAlgorithm": {
+              "type": "string",
+              "description": "Algorithm used for leaf hashes (if different)"
+            },
+            "leafCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of leaf nodes (records)"
+            },
+            "treeHeight": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Height of the Merkle tree"
+            },
+            "root": {
+              "type": "string",
+              "description": "Merkle root hash"
+            }
+          },
+          "required": ["algorithm", "leafCount", "root"]
+        },
+        "chain": {
+          "type": "object",
+          "description": "Chaining information linking to previous windows",
+          "properties": {
+            "previousWindowId": {
+              "type": "string",
+              "description": "ID of the previous window in the chain"
+            },
+            "previousMerkleRoot": {
+              "type": "string",
+              "description": "Merkle root of the previous window"
+            },
+            "chainLength": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Position in the window chain (1-indexed)"
+            },
+            "genesisWindowId": {
+              "type": "string",
+              "description": "ID of the first window in this chain"
+            }
+          }
+        }
+      },
+      "required": ["merkleTree"]
+    },
+    "aggregates": {
+      "type": "object",
+      "description": "Aggregate statistics for the window",
+      "properties": {
+        "checksum": {
+          "type": "string",
+          "description": "Checksum of aggregate values"
+        },
+        "statistics": {
+          "type": "object",
+          "description": "Statistical summary of window data",
+          "properties": {
+            "minTimestamp": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Earliest record timestamp in window"
+            },
+            "maxTimestamp": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Latest record timestamp in window"
+            },
+            "avgIntervalMs": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Average interval between records in milliseconds"
+            }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "collector": {
+      "type": "object",
+      "description": "Information about the stream processor",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the collector"
+        },
+        "version": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/VersionInfo"
+        },
+        "location": {
+          "type": "string",
+          "description": "Physical or logical location of the collector"
+        }
+      },
+      "required": ["id"]
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Processing metrics for the window",
+      "properties": {
+        "processingLatency": {
+          "type": "string",
+          "description": "Processing latency (ISO 8601 duration)"
+        },
+        "lateRecords": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of late-arriving records"
+        },
+        "droppedRecords": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Records dropped (exceeded lateness)"
+        },
+        "backpressureEvents": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of backpressure events"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Verification endpoint information",
+      "properties": {
+        "merkleProofAvailable": {
+          "type": "boolean",
+          "description": "Whether Merkle proofs are available"
+        },
+        "proofEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Endpoint to retrieve Merkle proofs"
+        }
+      }
+    }
+  },
+  "required": ["stream", "window", "integrity", "collector"],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "stream": {
+        "id": "iot_sensors",
+        "source": "mqtt://sensors.example.com:1883",
+        "topic": "sensors/+/readings"
+      },
+      "window": {
+        "type": "tumbling",
+        "duration": "PT1M",
+        "alignment": "wall-clock"
+      },
+      "integrity": {
+        "merkleTree": {
+          "algorithm": "sha256",
+          "leafCount": 847293,
+          "treeHeight": 20,
+          "root": "abc123def456789..."
+        }
+      },
+      "collector": {
+        "id": "https://expanso.io/edge/factory-edge-01",
+        "version": {
+          "expanso-edge": "1.2.0"
+        }
+      }
+    }
+  ]
+}

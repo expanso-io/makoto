@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makoto.dev/schemas/transform/v1.json",
+  "title": "Makoto Transform Attestation Predicate v1",
+  "description": "Schema for the predicate of a Makoto transform attestation, documenting how data was processed",
+  "type": "object",
+  "properties": {
+    "inputs": {
+      "type": "array",
+      "description": "Input datasets consumed by this transformation",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Identifier for the input dataset"
+          },
+          "digest": {
+            "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/DigestSet"
+          },
+          "attestationRef": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reference to the attestation for this input"
+          },
+          "makotoLevel": {
+            "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/MakotoLevel"
+          }
+        },
+        "required": ["name", "digest"]
+      },
+      "minItems": 1
+    },
+    "transform": {
+      "type": "object",
+      "description": "Details of the transformation operation",
+      "properties": {
+        "type": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI identifying the transform type (e.g., https://makoto.dev/transforms/anonymization)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name of the transformation"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the transformation"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what the transformation does"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Configuration parameters used in the transformation",
+          "additionalProperties": true
+        },
+        "codeRef": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/CodeReference"
+        }
+      },
+      "required": ["type", "name"]
+    },
+    "executor": {
+      "type": "object",
+      "description": "Information about the system that executed the transformation",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the executor"
+        },
+        "platform": {
+          "type": "string",
+          "description": "Platform name (e.g., expanso, spark, flink)"
+        },
+        "version": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/VersionInfo"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["production", "staging", "development", "testing"],
+          "description": "Deployment environment"
+        },
+        "isolation": {
+          "type": "string",
+          "enum": ["none", "process", "container", "vm", "tee", "hsm"],
+          "description": "Isolation level for the execution environment"
+        }
+      },
+      "required": ["id"]
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Execution metrics and statistics",
+      "properties": {
+        "invocationId": {
+          "type": "string",
+          "description": "Unique identifier for this invocation"
+        },
+        "startedOn": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When transformation started (RFC 3339)"
+        },
+        "finishedOn": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When transformation completed (RFC 3339)"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total duration in seconds"
+        },
+        "recordsInput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total records read from inputs"
+        },
+        "recordsOutput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total records written to output"
+        },
+        "recordsDropped": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Records dropped during transformation"
+        },
+        "recordsModified": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Records that were modified"
+        },
+        "bytesInput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total bytes read"
+        },
+        "bytesOutput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total bytes written"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Verification properties of the transformation",
+      "properties": {
+        "inputHashVerified": {
+          "type": "boolean",
+          "description": "Whether input hashes were verified before processing"
+        },
+        "transformDeterministic": {
+          "type": "boolean",
+          "description": "Whether the transform is deterministic"
+        },
+        "outputReproducible": {
+          "type": "boolean",
+          "description": "Whether the output can be reproduced from inputs"
+        }
+      }
+    }
+  },
+  "required": ["inputs", "transform", "executor"],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "inputs": [
+        {
+          "name": "dataset:raw_transactions",
+          "digest": {
+            "sha256": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+          },
+          "makotoLevel": "L2"
+        }
+      ],
+      "transform": {
+        "type": "https://makoto.dev/transforms/anonymization",
+        "name": "PII Anonymization",
+        "version": "1.0.0",
+        "codeRef": {
+          "uri": "git+https://github.com/example/pipelines.git",
+          "commit": "abc123def456"
+        }
+      },
+      "executor": {
+        "id": "https://expanso.io/pipelines/cluster-01",
+        "platform": "expanso",
+        "environment": "production"
+      }
+    }
+  ]
+}
