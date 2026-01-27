@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makoto.dev/schemas/transform/v1",
+  "title": "Makoto Transform Attestation",
+  "description": "JSON Schema for Makoto transform attestations, documenting data transformations with verifiable provenance. Built on in-toto Statement v1 format.",
+  "type": "object",
+  "required": ["_type", "subject", "predicateType", "predicate"],
+  "additionalProperties": false,
+  "properties": {
+    "_type": {
+      "type": "string",
+      "const": "https://in-toto.io/Statement/v1",
+      "description": "in-toto Statement format identifier"
+    },
+    "subject": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The output data artifacts produced by this transformation",
+      "items": {
+        "$ref": "#/$defs/subject"
+      }
+    },
+    "predicateType": {
+      "type": "string",
+      "const": "https://makoto.dev/transform/v1",
+      "description": "Makoto transform predicate type identifier"
+    },
+    "predicate": {
+      "$ref": "#/$defs/transformPredicate"
+    }
+  },
+  "$defs": {
+    "subject": {
+      "type": "object",
+      "required": ["name", "digest"],
+      "additionalProperties": false,
+      "description": "Identifies an output data artifact with its cryptographic digest",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier for the output dataset (e.g., 'dataset:customer_transactions_anonymized_2025q4')"
+        },
+        "digest": {
+          "$ref": "#/$defs/subjectDigest"
+        }
+      }
+    },
+    "subjectDigest": {
+      "type": "object",
+      "required": ["sha256"],
+      "additionalProperties": true,
+      "description": "Cryptographic digest(s) of the output data",
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]{64}$",
+          "description": "SHA-256 hash of the output data (64 hex characters)"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]{128}$",
+          "description": "SHA-512 hash of the output data (128 hex characters, optional)"
+        },
+        "recordCount": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Number of records in the output dataset"
+        },
+        "merkleRoot": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]{64}$",
+          "description": "Merkle tree root hash for record-level verification (64 hex characters)"
+        }
+      }
+    },
+    "transformPredicate": {
+      "type": "object",
+      "required": ["inputs", "transform", "executor"],
+      "additionalProperties": false,
+      "description": "The transform predicate describing what transformation was performed",
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Input data artifacts that were transformed",
+          "items": {
+            "$ref": "#/$defs/inputReference"
+          }
+        },
+        "transform": {
+          "$ref": "#/$defs/transformDefinition"
+        },
+        "executor": {
+          "$ref": "#/$defs/executor"
+        },
+        "metadata": {
+          "$ref": "#/$defs/executionMetadata"
+        },
+        "verification": {
+          "$ref": "#/$defs/verificationInfo"
+        }
+      }
+    },
+    "inputReference": {
+      "type": "object",
+      "required": ["name", "digest"],
+      "additionalProperties": false,
+      "description": "Reference to an input data artifact",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier for the input dataset"
+        },
+        "digest": {
+          "$ref": "#/$defs/inputDigest"
+        },
+        "attestationRef": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI to the attestation for this input (enables lineage chain verification)"
+        },
+        "makotoLevel": {
+          "type": "string",
+          "enum": ["L1", "L2", "L3"],
+          "description": "Makoto level of the input attestation"
+        }
+      }
+    },
+    "inputDigest": {
+      "type": "object",
+      "required": ["sha256"],
+      "additionalProperties": true,
+      "description": "Cryptographic digest(s) of the input data",
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]{64}$",
+          "description": "SHA-256 hash of the input data (64 hex characters)"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]{128}$",
+          "description": "SHA-512 hash of the input data (128 hex characters, optional)"
+        }
+      }
+    },
+    "transformDefinition": {
+      "type": "object",
+      "required": ["type", "name"],
+      "additionalProperties": false,
+      "description": "Definition of the transformation that was applied",
+      "properties": {
+        "type": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI identifying the transform type (e.g., 'https://makoto.dev/transforms/anonymization')"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable name of the transformation"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the transformation definition"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what the transformation does"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Configuration parameters used for this transformation"
+        },
+        "codeRef": {
+          "$ref": "#/$defs/codeReference"
+        }
+      }
+    },
+    "codeReference": {
+      "type": "object",
+      "required": ["uri"],
+      "additionalProperties": false,
+      "description": "Reference to the transformation code/configuration",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "URI to the code repository (e.g., 'git+https://github.com/org/repo.git')"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Git commit hash or other version identifier"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the specific file within the repository"
+        },
+        "digest": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Cryptographic digest of the code file",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "minLength": 1,
+              "description": "SHA-256 hash of the code (64 hex characters in production)"
+            }
+          }
+        }
+      }
+    },
+    "executor": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "description": "Information about the system that executed the transformation",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uri",
+          "description": "Unique identifier for the execution environment"
+        },
+        "platform": {
+          "type": "string",
+          "description": "Platform name (e.g., 'expanso', 'apache-spark', 'dbt')"
+        },
+        "version": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Version information for platform components"
+        },
+        "environment": {
+          "type": "string",
+          "description": "Execution environment (e.g., 'production', 'staging', 'development')"
+        },
+        "isolation": {
+          "type": "string",
+          "enum": ["none", "process", "container", "vm", "hardware"],
+          "description": "Level of isolation for the execution environment"
+        }
+      }
+    },
+    "executionMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Metadata about the transformation execution",
+      "properties": {
+        "invocationId": {
+          "type": "string",
+          "description": "Unique identifier for this specific execution"
+        },
+        "startedOn": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when execution started"
+        },
+        "finishedOn": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when execution completed"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Execution duration in seconds"
+        },
+        "recordsInput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of records read from inputs"
+        },
+        "recordsOutput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of records written to output"
+        },
+        "recordsDropped": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of records filtered/dropped during transformation"
+        },
+        "recordsModified": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of records that were modified"
+        },
+        "bytesInput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total bytes read from inputs"
+        },
+        "bytesOutput": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total bytes written to output"
+        }
+      }
+    },
+    "verificationInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Information about verification performed during transformation",
+      "properties": {
+        "inputHashVerified": {
+          "type": "boolean",
+          "description": "Whether input data hashes were verified before processing"
+        },
+        "transformDeterministic": {
+          "type": "boolean",
+          "description": "Whether the transformation produces deterministic output"
+        },
+        "outputReproducible": {
+          "type": "boolean",
+          "description": "Whether the output can be reproduced from inputs + transform definition"
+        }
+      }
+    }
+  }
+}
