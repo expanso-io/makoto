@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makoto.dev/schemas/dbom/v1.json",
+  "title": "Makoto Data Bill of Materials (DBOM) v1",
+  "description": "Schema for a Makoto DBOM, documenting complete data lineage from sources through transformations",
+  "type": "object",
+  "properties": {
+    "dbomVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Version of the DBOM schema"
+    },
+    "dbomId": {
+      "type": "string",
+      "format": "uri",
+      "description": "Unique identifier for this DBOM (URN format recommended)"
+    },
+    "dataset": {
+      "type": "object",
+      "description": "The final dataset this DBOM describes",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the dataset"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the dataset"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the dataset was created"
+        },
+        "creator": {
+          "type": "object",
+          "properties": {
+            "organization": {
+              "type": "string",
+              "description": "Organization that created the dataset"
+            },
+            "contact": {
+              "type": "string",
+              "description": "Contact email or URI"
+            }
+          }
+        },
+        "digest": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "description": "SHA-256 hash of the dataset"
+            },
+            "recordCount": {
+              "type": "string",
+              "description": "Number of records"
+            },
+            "format": {
+              "type": "string",
+              "description": "Data format (e.g., parquet, csv, json)"
+            }
+          },
+          "required": ["sha256"]
+        },
+        "makotoLevel": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/MakotoLevel"
+        }
+      },
+      "required": ["name", "digest"]
+    },
+    "sources": {
+      "type": "array",
+      "description": "All source datasets contributing to the final dataset",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Source dataset name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the source"
+          },
+          "attestationRef": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reference to the origin attestation"
+          },
+          "attestationType": {
+            "type": "string",
+            "const": "https://makoto.dev/origin/v1",
+            "description": "Type of attestation"
+          },
+          "makotoLevel": {
+            "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/MakotoLevel"
+          },
+          "geography": {
+            "type": "string",
+            "description": "Geographic origin of the data"
+          },
+          "consent": {
+            "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/ConsentInfo"
+          },
+          "license": {
+            "type": "object",
+            "description": "License information for the source",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "License type"
+              },
+              "identifier": {
+                "type": "string",
+                "description": "SPDX license identifier"
+              },
+              "reference": {
+                "type": "string",
+                "format": "uri",
+                "description": "Link to license text"
+              }
+            }
+          },
+          "contribution": {
+            "type": "object",
+            "description": "How much this source contributes to the final dataset",
+            "properties": {
+              "recordCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "recordPercentage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          }
+        },
+        "required": ["name", "attestationRef"]
+      },
+      "minItems": 1
+    },
+    "transformations": {
+      "type": "array",
+      "description": "Ordered list of transformations applied to create the final dataset",
+      "items": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Order in the transformation chain"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the transformation"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this transformation does"
+          },
+          "attestationRef": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reference to the transform attestation"
+          },
+          "attestationType": {
+            "type": "string",
+            "const": "https://makoto.dev/transform/v1",
+            "description": "Type of attestation"
+          },
+          "makotoLevel": {
+            "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/MakotoLevel"
+          },
+          "inputs": {
+            "type": "array",
+            "description": "Input dataset names",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "description": "Output dataset names",
+            "items": {
+              "type": "string"
+            }
+          },
+          "transformType": {
+            "type": "string",
+            "format": "uri",
+            "description": "Type URI for the transformation"
+          }
+        },
+        "required": ["order", "name", "attestationRef", "inputs", "outputs"]
+      }
+    },
+    "lineageGraph": {
+      "type": "object",
+      "description": "Visual representation of the data lineage",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["graphviz-dot", "mermaid", "json-graph"],
+          "description": "Format of the graph content"
+        },
+        "content": {
+          "type": "string",
+          "description": "Graph content in the specified format"
+        }
+      },
+      "required": ["format", "content"]
+    },
+    "compliance": {
+      "type": "object",
+      "description": "Compliance and governance information",
+      "properties": {
+        "overallMakotoLevel": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/MakotoLevel"
+        },
+        "levelJustification": {
+          "type": "string",
+          "description": "Explanation of how the level was determined"
+        },
+        "privacyAssessment": {
+          "type": "object",
+          "description": "Privacy-related assessments",
+          "properties": {
+            "piiRemoved": {
+              "type": "boolean"
+            },
+            "anonymizationVerified": {
+              "type": "boolean"
+            },
+            "kAnonymity": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "lDiversity": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "regulatoryCompliance": {
+          "type": "array",
+          "description": "Regulatory compliance status",
+          "items": {
+            "type": "object",
+            "properties": {
+              "regulation": {
+                "type": "string",
+                "description": "Regulation name/article"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["compliant", "non-compliant", "not-applicable", "pending-review"]
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "required": ["regulation", "status"]
+          }
+        },
+        "dtaCompliance": {
+          "type": "object",
+          "properties": {
+            "standardsVersion": {
+              "type": "string"
+            },
+            "allFieldsPresent": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Results of verification checks",
+      "properties": {
+        "chainVerified": {
+          "type": "boolean",
+          "description": "Whether the full attestation chain was verified"
+        },
+        "allSignaturesValid": {
+          "type": "boolean",
+          "description": "Whether all signatures are valid"
+        },
+        "attestationCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of attestations in the chain"
+        },
+        "verificationTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When verification was performed"
+        },
+        "verifier": {
+          "type": "object",
+          "properties": {
+            "tool": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "DBOM metadata",
+      "properties": {
+        "generator": {
+          "type": "object",
+          "properties": {
+            "tool": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "validUntil": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "accessControl": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": ["public", "internal", "restricted", "confidential"]
+            },
+            "allowedConsumers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["dbomVersion", "dbomId", "dataset", "sources"],
+  "additionalProperties": true
+}

@@ -3,22 +3,22 @@
 ## 1. Specification Foundation
 
 ### 1.1 Formal Level Requirements
-- [ ] 1.1.1 Write L1 formal requirements document
-- [ ] 1.1.2 Write L2 formal requirements document
-- [ ] 1.1.3 Write L3 formal requirements document
-- [ ] 1.1.4 Create level comparison matrix
+- [x] 1.1.1 Write L1 formal requirements document (docs/levels/index.html)
+- [x] 1.1.2 Write L2 formal requirements document (docs/levels/index.html)
+- [x] 1.1.3 Write L3 formal requirements document (docs/levels/index.html)
+- [x] 1.1.4 Create level comparison matrix (docs/levels/index.html#adoption)
 
 ### 1.2 JSON Schema Definitions
-- [ ] 1.2.1 Create schema for `makoto.dev/origin/v1` predicate
-- [ ] 1.2.2 Create schema for `makoto.dev/transform/v1` predicate
-- [ ] 1.2.3 Create schema for `makoto.dev/stream-window/v1` predicate
-- [ ] 1.2.4 Create schema for DBOM format
-- [ ] 1.2.5 Add validation examples and test cases
+- [x] 1.2.1 Create schema for `makoto.dev/origin/v1` predicate
+- [x] 1.2.2 Create schema for `makoto.dev/transform/v1` predicate
+- [x] 1.2.3 Create schema for `makoto.dev/stream-window/v1` predicate
+- [x] 1.2.4 Create schema for DBOM format
+- [x] 1.2.5 Add validation examples and test cases
 
 ### 1.3 Comparison Documentation
-- [ ] 1.3.1 Write "Makoto vs Open Lineage" comparison
+- [x] 1.3.1 Write "Makoto vs Open Lineage" comparison (docs/comparison/open-lineage.html)
 - [ ] 1.3.2 Write "Makoto vs W3C PROV" comparison
-- [ ] 1.3.3 Write "Makoto vs SLSA" relationship document
+- [x] 1.3.3 Write "Makoto vs SLSA" relationship document (docs/comparison/index.html)
 - [ ] 1.3.4 Create decision guide: "Which standard should I use?"
 
 ### 1.4 Signature & Verification Guide

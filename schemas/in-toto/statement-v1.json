@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://in-toto.io/schemas/Statement/v1.json",
+  "title": "in-toto Statement v1",
+  "description": "in-toto attestation statement format (v1) - wrapper for Makoto predicates",
+  "type": "object",
+  "properties": {
+    "_type": {
+      "type": "string",
+      "const": "https://in-toto.io/Statement/v1",
+      "description": "Statement format identifier"
+    },
+    "subject": {
+      "type": "array",
+      "description": "Set of artifacts this statement applies to",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Identifier for the subject artifact"
+          },
+          "digest": {
+            "type": "object",
+            "description": "Cryptographic digest(s) of the subject",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["digest"]
+      },
+      "minItems": 1
+    },
+    "predicateType": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI identifying the predicate type"
+    },
+    "predicate": {
+      "type": "object",
+      "description": "Type-specific predicate contents"
+    }
+  },
+  "required": ["_type", "subject", "predicateType", "predicate"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "predicateType": { "const": "https://makoto.dev/origin/v1" }
+        }
+      },
+      "then": {
+        "properties": {
+          "predicate": { "$ref": "https://makoto.dev/schemas/origin/v1.json" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "predicateType": { "const": "https://makoto.dev/transform/v1" }
+        }
+      },
+      "then": {
+        "properties": {
+          "predicate": { "$ref": "https://makoto.dev/schemas/transform/v1.json" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "predicateType": { "const": "https://makoto.dev/stream-window/v1" }
+        }
+      },
+      "then": {
+        "properties": {
+          "predicate": { "$ref": "https://makoto.dev/schemas/stream-window/v1.json" }
+        }
+      }
+    }
+  ]
+}

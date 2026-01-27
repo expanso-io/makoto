@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makoto.dev/schemas/common/definitions.json",
+  "title": "Makoto Common Definitions",
+  "description": "Shared type definitions for Makoto attestation schemas",
+  "$defs": {
+    "DigestSet": {
+      "type": "object",
+      "description": "A set of cryptographic digests for an artifact",
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash in lowercase hex"
+        },
+        "sha384": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{96}$",
+          "description": "SHA-384 hash in lowercase hex"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{128}$",
+          "description": "SHA-512 hash in lowercase hex"
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "SubjectDigest": {
+      "type": "object",
+      "description": "Extended digest for Makoto subjects including data-specific fields",
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "merkleRoot": {
+          "type": "string",
+          "description": "Merkle tree root hash for the data"
+        },
+        "recordCount": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Number of records (as string for large values)"
+        },
+        "windowStart": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Start of window for stream subjects"
+        },
+        "windowEnd": {
+          "type": "string",
+          "format": "date-time",
+          "description": "End of window for stream subjects"
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ResourceDescriptor": {
+      "type": "object",
+      "description": "Describes a data resource (input or output)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifier for the resource"
+        },
+        "digest": {
+          "$ref": "#/$defs/DigestSet"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI locating the resource"
+        },
+        "attestationRef": {
+          "type": "string",
+          "format": "uri",
+          "description": "Reference to attestation for this resource"
+        },
+        "makotoLevel": {
+          "$ref": "#/$defs/MakotoLevel"
+        }
+      },
+      "required": ["name", "digest"]
+    },
+    "MakotoLevel": {
+      "type": "string",
+      "enum": ["L1", "L2", "L3"],
+      "description": "Makoto assurance level"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp"
+    },
+    "Duration": {
+      "type": "string",
+      "pattern": "^P(?:\\d+Y)?(?:\\d+M)?(?:\\d+D)?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?$",
+      "description": "ISO 8601 duration"
+    },
+    "VersionInfo": {
+      "type": "object",
+      "description": "Software version information",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "minProperties": 1
+    },
+    "CodeReference": {
+      "type": "object",
+      "description": "Reference to source code",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "URI to the code repository"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Git commit hash or equivalent"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path within the repository"
+        },
+        "digest": {
+          "$ref": "#/$defs/DigestSet"
+        }
+      },
+      "required": ["uri"]
+    },
+    "ConsentInfo": {
+      "type": "object",
+      "description": "Data collection consent information",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["explicit", "contractual", "legitimate-interest", "public-interest", "legal-obligation", "vital-interest"],
+          "description": "GDPR lawful basis or equivalent consent type"
+        },
+        "reference": {
+          "type": "string",
+          "format": "uri",
+          "description": "Reference to consent documentation"
+        },
+        "obtained": {
+          "$ref": "#/$defs/Timestamp"
+        }
+      },
+      "required": ["type"]
+    },
+    "DTASourceStandard": {
+      "type": "object",
+      "description": "D&TA Source Standard fields",
+      "properties": {
+        "datasetTitle": { "type": "string" },
+        "datasetIssuer": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "DTAProvenanceStandard": {
+      "type": "object",
+      "description": "D&TA Provenance Standard fields",
+      "properties": {
+        "dataOriginGeography": { "type": "string" },
+        "method": { "type": "string" },
+        "dataFormat": { "type": "string" }
+      }
+    },
+    "DTAUseStandard": {
+      "type": "object",
+      "description": "D&TA Use Standard fields",
+      "properties": {
+        "confidentialityClassification": { "type": "string" },
+        "intendedDataUse": { "type": "string" },
+        "license": { "type": "string" }
+      }
+    },
+    "DTACompliance": {
+      "type": "object",
+      "description": "Data & Trust Alliance compliance information",
+      "properties": {
+        "standardsVersion": { "type": "string" },
+        "sourceStandard": { "$ref": "#/$defs/DTASourceStandard" },
+        "provenanceStandard": { "$ref": "#/$defs/DTAProvenanceStandard" },
+        "useStandard": { "$ref": "#/$defs/DTAUseStandard" }
+      }
+    }
+  }
+}

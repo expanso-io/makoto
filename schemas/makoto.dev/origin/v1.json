@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makoto.dev/schemas/origin/v1.json",
+  "title": "Makoto Origin Attestation Predicate v1",
+  "description": "Schema for the predicate of a Makoto origin attestation, documenting where data was collected",
+  "type": "object",
+  "properties": {
+    "origin": {
+      "type": "object",
+      "description": "Information about the data source and collection",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "URI or identifier of the data source"
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["api", "database", "file", "stream", "manual", "sensor", "web-scrape", "other"],
+          "description": "Type of data source"
+        },
+        "collectionMethod": {
+          "type": "string",
+          "enum": ["scheduled-pull", "event-driven", "manual-upload", "continuous-stream", "batch-export", "webhook", "other"],
+          "description": "How data was collected from the source"
+        },
+        "collectionTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When data collection occurred (RFC 3339)"
+        },
+        "geography": {
+          "type": "string",
+          "description": "Geographic region where data was collected (ISO 3166-1 or cloud region)"
+        },
+        "consent": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/ConsentInfo"
+        }
+      },
+      "required": ["source", "collectionTimestamp"]
+    },
+    "collector": {
+      "type": "object",
+      "description": "Information about the system that collected the data",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the collector"
+        },
+        "version": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/VersionInfo"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["production", "staging", "development", "testing"],
+          "description": "Deployment environment"
+        }
+      },
+      "required": ["id"]
+    },
+    "schema": {
+      "type": "object",
+      "description": "Information about the data schema/format",
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "Data format (e.g., json-lines, csv, parquet, avro)"
+        },
+        "schemaRef": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI to the schema definition"
+        },
+        "schemaDigest": {
+          "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/DigestSet"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Collection statistics and metrics",
+      "properties": {
+        "collectionDuration": {
+          "type": "string",
+          "description": "ISO 8601 duration of the collection process"
+        },
+        "bytesCollected": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total bytes collected"
+        },
+        "recordsCollected": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of records collected"
+        },
+        "recordsDropped": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Records dropped due to errors or filtering"
+        },
+        "errorRate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Error rate as a decimal (0.0 to 1.0)"
+        }
+      }
+    },
+    "dtaCompliance": {
+      "$ref": "https://makoto.dev/schemas/common/definitions.json#/$defs/DTACompliance"
+    }
+  },
+  "required": ["origin", "collector"],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "origin": {
+        "source": "https://api.example.com/v2/transactions",
+        "sourceType": "api",
+        "collectionMethod": "scheduled-pull",
+        "collectionTimestamp": "2025-12-20T08:00:00Z",
+        "geography": "US-WEST-2"
+      },
+      "collector": {
+        "id": "https://expanso.io/collectors/prod-collector-01",
+        "version": {
+          "expanso-cli": "1.4.2"
+        },
+        "environment": "production"
+      }
+    }
+  ]
+}
