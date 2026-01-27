@@ -4,9 +4,9 @@
     {
       "name": "dataset:customer_transactions_anonymized_2025q4",
       "digest": {
-        "sha256": "xyz789012345678901234567890abcdef1234567890abcdef1234567890abcd",
+        "sha256": "abc1234567890123456789012345678901234567890123456789012345678901",
         "recordCount": "1847293",
-        "merkleRoot": "ghi012345678901234567890abcdef1234567890abcdef1234567890abcdef"
+        "merkleRoot": "def1234567890123456789012345678901234567890123456789012345678901"
       }
     }
   ],
