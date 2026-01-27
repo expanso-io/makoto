@@ -30,34 +30,51 @@
 
 ## 2. SDK Development
 
+### 2.0 SDK Code Generation Foundation
+- [x] 2.0.1 Create SDK generation documentation (sdks/README.md)
+- [x] 2.0.2 Create code generation instructions (sdks/codegen/README.md)
+- [x] 2.0.3 Create Makefile with targets for all languages (sdks/codegen/Makefile)
+- [x] 2.0.4 Create Python CLI for SDK generation (sdks/codegen/generate.py)
+
 ### 2.1 Python SDK (`makoto-py`)
 - [ ] 2.1.1 Create package structure and pyproject.toml
-- [ ] 2.1.2 Implement attestation data models
-- [ ] 2.1.3 Implement attestation generation
-- [ ] 2.1.4 Implement signature operations (sign/verify)
-- [ ] 2.1.5 Implement DBOM generation
-- [ ] 2.1.6 Add streaming window support
+- [ ] 2.1.2 Generate models from JSON Schema (datamodel-codegen)
+- [ ] 2.1.3 Implement attestation creation helpers
+- [ ] 2.1.4 Implement Sigstore signing integration
+- [ ] 2.1.5 Implement signature verification
+- [ ] 2.1.6 Implement Merkle tree for streaming
 - [ ] 2.1.7 Write comprehensive tests
 - [ ] 2.1.8 Write SDK documentation
 - [ ] 2.1.9 Publish to PyPI
 
 ### 2.2 Go SDK (`makoto-go`)
 - [ ] 2.2.1 Create module structure
-- [ ] 2.2.2 Implement attestation types
-- [ ] 2.2.3 Implement generation and signing
-- [ ] 2.2.4 Implement verification
-- [ ] 2.2.5 Add Merkle tree implementation
+- [ ] 2.2.2 Generate models from JSON Schema (go-jsonschema)
+- [ ] 2.2.3 Implement attestation builders
+- [ ] 2.2.4 Implement signing and verification
+- [ ] 2.2.5 Implement Merkle tree for streaming
 - [ ] 2.2.6 Write tests and benchmarks
 - [ ] 2.2.7 Write SDK documentation
 
-### 2.3 JavaScript SDK (`makoto-js`)
+### 2.3 TypeScript SDK (`makoto-js`)
 - [ ] 2.3.1 Create package structure (TypeScript)
-- [ ] 2.3.2 Implement browser-compatible verification
-- [ ] 2.3.3 Implement Node.js attestation generation
-- [ ] 2.3.4 Add WebCrypto signing support
-- [ ] 2.3.5 Write tests (Jest)
-- [ ] 2.3.6 Write SDK documentation
-- [ ] 2.3.7 Publish to npm
+- [ ] 2.3.2 Generate types from JSON Schema (json-schema-to-typescript)
+- [ ] 2.3.3 Implement browser-compatible verification
+- [ ] 2.3.4 Implement Node.js attestation generation
+- [ ] 2.3.5 Add WebCrypto signing support
+- [ ] 2.3.6 Write tests (Jest/Vitest)
+- [ ] 2.3.7 Write SDK documentation
+- [ ] 2.3.8 Publish to npm
+
+### 2.4 Rust SDK (`makoto-rs`)
+- [ ] 2.4.1 Create crate structure
+- [ ] 2.4.2 Generate models from JSON Schema (typify)
+- [ ] 2.4.3 Implement attestation builders
+- [ ] 2.4.4 Implement signing with sigstore-rs
+- [ ] 2.4.5 Implement Merkle tree for streaming
+- [ ] 2.4.6 Write tests
+- [ ] 2.4.7 Write SDK documentation
+- [ ] 2.4.8 Publish to crates.io
 
 ## 3. Open Schema & Standards
 
