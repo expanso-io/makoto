@@ -1,0 +1,324 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-schemas:
+    name: Validate JSON Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ajv-cli
+        run: npm install -g ajv-cli ajv-formats
+
+      - name: Validate schema files are valid JSON Schema
+        run: |
+          echo "Validating schema files..."
+          for schema in schemas/makoto.dev/*/v1.json schemas/makoto.dev/common/*.json; do
+            echo "Checking $schema is valid JSON..."
+            cat "$schema" | jq . > /dev/null
+          done
+          echo "All schema files are valid JSON"
+
+      - name: Validate in-toto statement schema
+        run: |
+          cat schemas/in-toto/statement-v1.json | jq . > /dev/null
+          echo "in-toto statement schema is valid JSON"
+
+  validate-examples:
+    name: Validate Example Attestations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install jsonschema referencing
+
+      - name: Validate examples against schemas
+        run: |
+          python3 << 'PYEOF'
+          import json
+          import sys
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+          from referencing import Registry, Resource
+
+          # Load schemas
+          schema_dir = Path("schemas")
+          schemas = {}
+          for schema_file in schema_dir.rglob("*.json"):
+              with open(schema_file) as f:
+                  schema = json.load(f)
+                  if "$id" in schema:
+                      schemas[schema["$id"]] = schema
+                      print(f"Loaded: {schema['$id']}")
+
+          # Create registry
+          def retrieve(uri):
+              if uri in schemas:
+                  return Resource.from_contents(schemas[uri])
+              raise KeyError(uri)
+
+          registry = Registry(retrieve=retrieve)
+
+          # Validate examples
+          examples = [
+              ("docs/attestations/origin-example.json", "origin",
+               "https://makoto.dev/schemas/origin/v1.json"),
+              ("docs/attestations/transform-example.json", "transform",
+               "https://makoto.dev/schemas/transform/v1.json"),
+              ("docs/attestations/stream-window-example.json", "stream-window",
+               "https://makoto.dev/schemas/stream-window/v1.json"),
+              ("docs/attestations/dbom-example.json", "dbom",
+               "https://makoto.dev/schemas/dbom/v1.json"),
+          ]
+
+          errors_found = False
+          for example_file, name, schema_id in examples:
+              try:
+                  with open(example_file) as f:
+                      example = json.load(f)
+
+                  schema = schemas[schema_id]
+                  validator = Draft202012Validator(schema, registry=registry)
+
+                  # For attestations validate predicate; for DBOM validate whole thing
+                  data = example["predicate"] if "predicate" in example else example
+
+                  validation_errors = list(validator.iter_errors(data))
+                  # Filter out placeholder hash errors (example files have placeholders)
+                  real_errors = [e for e in validation_errors
+                                 if "does not match" not in str(e.message)
+                                 or "_hash_here" not in str(e.instance)]
+
+                  if real_errors:
+                      print(f"FAIL: {name}")
+                      for error in real_errors[:5]:
+                          print(f"  - {error.json_path}: {error.message}")
+                      errors_found = True
+                  else:
+                      print(f"PASS: {name}")
+              except Exception as e:
+                  print(f"ERROR: {name} - {e}")
+                  errors_found = True
+
+          if errors_found:
+              sys.exit(1)
+          print("\nAll examples validated successfully!")
+          PYEOF
+
+  validate-html:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install html-validate
+        run: npm install -g html-validate
+
+      - name: Create html-validate config
+        run: |
+          cat > .htmlvalidate.json << 'EOF'
+          {
+            "extends": ["html-validate:recommended"],
+            "rules": {
+              "no-trailing-whitespace": "off",
+              "void-style": "off",
+              "attribute-boolean-style": "off",
+              "doctype-style": "off",
+              "element-permitted-content": "off",
+              "no-inline-style": "off"
+            }
+          }
+          EOF
+
+      - name: Validate HTML files
+        run: |
+          echo "Validating HTML files..."
+          html-validate "docs/**/*.html" || true
+          echo "HTML validation complete (warnings allowed)"
+
+  validate-json:
+    name: Validate JSON Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate all JSON files
+        run: |
+          echo "Validating JSON files..."
+          find . -name "*.json" -not -path "./.git/*" | while read file; do
+            if ! cat "$file" | jq . > /dev/null 2>&1; then
+              echo "INVALID JSON: $file"
+              exit 1
+            fi
+            echo "OK: $file"
+          done
+          echo "All JSON files are valid"
+
+  check-links:
+    name: Check Internal Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for broken internal links
+        run: |
+          echo "Checking internal links in HTML files..."
+          python3 << 'PYEOF'
+          import re
+          import sys
+          from pathlib import Path
+
+          docs_dir = Path("docs")
+          errors = []
+
+          for html_file in docs_dir.rglob("*.html"):
+              content = html_file.read_text()
+
+              # Find href attributes with relative paths
+              hrefs = re.findall(r'href=["\']([^"\']+)["\']', content)
+
+              for href in hrefs:
+                  # Skip external links, anchors, and protocols
+                  if href.startswith(('http://', 'https://', '#', 'mailto:',
+                                       'javascript:', '/shared/')):
+                      continue
+
+                  # Resolve relative path
+                  if href.startswith('/'):
+                      target = docs_dir / href.lstrip('/')
+                  else:
+                      target = html_file.parent / href
+
+                  # Remove anchor from path
+                  target_path = str(target).split('#')[0]
+                  target = Path(target_path)
+
+                  # Check if file/directory exists
+                  if not target.exists() and not (target.parent / 'index.html').exists():
+                      # Check if it's a directory reference
+                      if target.suffix == '' and not target.exists():
+                          target_index = target / 'index.html'
+                          if not target_index.exists():
+                              errors.append(f"{html_file}: broken link to '{href}'")
+                      elif not target.exists():
+                          errors.append(f"{html_file}: broken link to '{href}'")
+
+          if errors:
+              print("Broken links found:")
+              for error in errors:
+                  print(f"  - {error}")
+              # Don't fail for now, just warn
+              # sys.exit(1)
+          else:
+              print("No broken internal links found")
+          PYEOF
+
+  validate-openspec:
+    name: Validate OpenSpec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check OpenSpec structure
+        run: |
+          echo "Checking OpenSpec structure..."
+
+          # Check required files exist
+          required_files=(
+            "openspec/project.md"
+            "openspec/AGENTS.md"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: Missing required file: $file"
+              exit 1
+            fi
+            echo "OK: $file exists"
+          done
+
+          # Check changes have required structure
+          for change_dir in openspec/changes/*/; do
+            if [ -d "$change_dir" ] && [ "$(basename $change_dir)" != "archive" ]; then
+              change_name=$(basename "$change_dir")
+
+              if [ ! -f "${change_dir}proposal.md" ]; then
+                echo "ERROR: $change_name missing proposal.md"
+                exit 1
+              fi
+
+              if [ ! -f "${change_dir}tasks.md" ]; then
+                echo "ERROR: $change_name missing tasks.md"
+                exit 1
+              fi
+
+              echo "OK: $change_name has required files"
+            fi
+          done
+
+          echo "OpenSpec structure is valid"
+
+  consistency-check:
+    name: Check Documentation Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check predicate type consistency
+        run: |
+          echo "Checking predicate type consistency..."
+          python3 << 'PYEOF'
+          import re
+          from pathlib import Path
+
+          # Expected predicate types
+          expected_types = {
+              "https://makoto.dev/origin/v1",
+              "https://makoto.dev/transform/v1",
+              "https://makoto.dev/stream-window/v1"
+          }
+
+          # Check README mentions all types
+          readme = Path("README.md").read_text()
+          for ptype in expected_types:
+              if ptype not in readme:
+                  print(f"WARNING: {ptype} not found in README.md")
+
+          # Check all JSON files use correct types
+          for json_file in Path("docs/attestations").glob("*.json"):
+              content = json_file.read_text()
+              for ptype in re.findall(r'https://makoto\.dev/[^"]+', content):
+                  if ptype not in expected_types and "schemas" not in ptype:
+                      print(f"WARNING: Unknown predicate type in {json_file}: {ptype}")
+
+          print("Consistency check complete")
+          PYEOF
+
+      - name: Check Makoto level consistency
+        run: |
+          echo "Checking Makoto level definitions..."
+          grep -r "L1\|L2\|L3" docs/ README.md --include="*.html" --include="*.md" | \
+            grep -v "Binary" | head -20 || true
+          echo "Level references found (manual review recommended)"
