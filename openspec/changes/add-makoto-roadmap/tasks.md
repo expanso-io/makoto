@@ -16,7 +16,7 @@
 - [x] 1.2.5 Add validation examples and test cases
 
 ### 1.3 Comparison Documentation
-- [ ] 1.3.1 Write "Makoto vs Open Lineage" comparison
+- [x] 1.3.1 Write "Makoto vs Open Lineage" comparison (docs/comparison/open-lineage.html)
 - [ ] 1.3.2 Write "Makoto vs W3C PROV" comparison
 - [x] 1.3.3 Write "Makoto vs SLSA" relationship document (docs/comparison/index.html)
 - [ ] 1.3.4 Create decision guide: "Which standard should I use?"
