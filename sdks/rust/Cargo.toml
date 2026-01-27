@@ -1,0 +1,48 @@
+[package]
+name = "makoto"
+version = "0.1.0"
+edition = "2021"
+authors = ["Makoto Contributors"]
+description = "Rust SDK for Makoto data provenance attestations"
+license = "Apache-2.0"
+repository = "https://github.com/makoto-dev/makoto"
+keywords = ["provenance", "attestation", "data-lineage", "in-toto", "slsa"]
+categories = ["cryptography", "data-structures"]
+rust-version = "1.70"
+
+[dependencies]
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Cryptography
+sha2 = "0.10"
+p256 = { version = "0.13", features = ["ecdsa", "pem"] }
+signature = "2.2"
+rand = "0.8"
+base64 = "0.22"
+hex = "0.4"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling
+thiserror = "1.0"
+
+[dev-dependencies]
+# Testing
+pretty_assertions = "1.4"
+tempfile = "3.10"
+
+[features]
+default = []
+# Enable HSM support (future)
+hsm = []
+
+[lib]
+name = "makoto"
+path = "src/lib.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration.rs"
